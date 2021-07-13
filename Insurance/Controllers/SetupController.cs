@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Insurance.BL.Model;
+using Insurance.BL.Util;
 using Insurance.Insurance.BL.setup;
 using Insurance.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
 
 namespace Insurance.Controllers
 {
+    [Authorize(Roles = UserRole.Admin)]
     [Route("api/[controller]")]
     [ApiController]
     public class SetupController : ControllerBase
@@ -92,9 +95,24 @@ namespace Insurance.Controllers
         {
             try
             {
-                var data = await _Setupbl.SaveSetup(model);
+                if (ModelState.IsValid)
+                {
 
-                return Ok(data);
+                    var data = await _Setupbl.SaveSetup(model);
+                    if (data == null)
+                    {
+                        return NotFound();
+                    }
+
+                    return Ok(data);
+                }
+                else
+                {
+                    string messages = string.Join("; ", ModelState.Values
+                                       .SelectMany(x => x.Errors)
+                                       .Select(x => x.ErrorMessage));
+                    throw new Exception(messages);
+                }
             }
             catch (Exception ex)
             {

@@ -47,7 +47,9 @@ namespace Insurance.Model
 
     public class InsurancePageRequest
     {
+        [Required]
         public int Page { get; set; }
+        [Required]
         public int Pagesize { get; set; }
 
 

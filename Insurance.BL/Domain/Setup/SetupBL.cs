@@ -104,6 +104,7 @@ namespace Insurance.Insurance.BL.setup
                         {
 
                             var data = Mapper.Map<SetupDTO, Setup>(model);
+                            data.IsActive = true;
                             _dbcontext.Entry(data).State = EntityState.Modified;
 
                         }

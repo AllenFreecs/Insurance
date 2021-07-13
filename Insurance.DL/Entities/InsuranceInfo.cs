@@ -6,7 +6,7 @@ namespace Insurance.DL.Entities
     public partial class InsuranceInfo
     {
         public int ID { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public int? UpdatedBy { get; set; }

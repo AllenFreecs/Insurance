@@ -28,7 +28,7 @@ namespace Insurance.BL.Util.AutoMapper
         {
             CreateMap<InsuranceInfo, InsuranceInfoDTO>().IgnoreAllNonExisting();
             CreateMap<InsuranceInfoDTO, InsuranceInfo>().IgnoreAllNonExisting();
-            CreateMap<InsuranceInfoDetailDTO, InsuranceInfoDTO>().IgnoreAllNonExisting();
+            CreateMap<InsuranceInfoDetail, InsuranceInfoDetailDTO>().IgnoreAllNonExisting();
         }
         private void InsuranceDetailDTOMap()
         {

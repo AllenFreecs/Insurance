@@ -46,34 +46,41 @@ namespace Insurance.BL.Auth
                 {
                     var currentuser = await _dbcontext.Users.SingleOrDefaultAsync(x => x.UserName == username && x.IsActive == true && x.IsConfirmed == true);
 
-                    //Check attempts
-                    int? numattempts = currentuser.InvalidAttempts;
-                    if (numattempts == 3)
+                    if (currentuser != null)
                     {
-
-                        return new GlobalResponseDTO { IsSuccess = false, Message = "Account is locked." };
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(currentuser.UserName))
+                        //Check attempts
+                        int? numattempts = currentuser.InvalidAttempts;
+                        if (numattempts == 3)
                         {
-                            using (var transaction = _dbcontext.Database.BeginTransaction())
+
+                            return new GlobalResponseDTO { IsSuccess = false, Message = "Account is locked." };
+                        }
+                        else
+                        {
+                            if (!string.IsNullOrEmpty(currentuser.UserName))
                             {
-                                try
+                                using (var transaction = _dbcontext.Database.BeginTransaction())
                                 {
-                                    currentuser.InvalidAttempts = currentuser.InvalidAttempts.GetValueOrDefault() + 1;
-                                    _dbcontext.Entry(currentuser).State = EntityState.Modified;
-                                    _dbcontext.SaveChanges();
-                                    transaction.Commit();
-                                }
-                                catch
-                                {
-                                    transaction.Rollback();
-                                    throw;
+                                    try
+                                    {
+                                        currentuser.InvalidAttempts = currentuser.InvalidAttempts.GetValueOrDefault() + 1;
+                                        _dbcontext.Entry(currentuser).State = EntityState.Modified;
+                                        _dbcontext.SaveChanges();
+                                        transaction.Commit();
+                                    }
+                                    catch
+                                    {
+                                        transaction.Rollback();
+                                        throw;
+                                    }
                                 }
                             }
+
+                            return new GlobalResponseDTO { IsSuccess = false, Message = "Username or password is incorrect." };
                         }
 
+                    }
+                    else {
                         return new GlobalResponseDTO { IsSuccess = false, Message = "Username or password is incorrect." };
                     }
 

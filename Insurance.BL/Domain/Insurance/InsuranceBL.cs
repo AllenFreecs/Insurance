@@ -101,11 +101,11 @@ namespace Insurance.Insurance.BL.insurance
             try
             {
                 var data = await _dbcontext.InsuranceInfo.Where(c => c.ID == ID && c.IsActive == true).SingleOrDefaultAsync();
-                var detail = await _dbcontext.InsuranceInfoDetail.Where(c => c.ID_InsuranceInfo == ID).SingleOrDefaultAsync();
+                var detail = await _dbcontext.InsuranceInfoDetail.Where(c => c.ID_InsuranceInfo == ID).ToListAsync();
 
 
                 var Insurancedata = Mapper.Map<InsuranceInfo, InsuranceInfoDTO>(data);
-                Insurancedata = Mapper.Map<InsuranceInfoDetail, InsuranceInfoDTO>(detail);
+                Insurancedata.InsuranceInfoDetail = Mapper.Map<IEnumerable<InsuranceInfoDetail>, IEnumerable<InsuranceInfoDetailDTO>>(detail);
 
 
                 return Insurancedata;
@@ -132,7 +132,7 @@ namespace Insurance.Insurance.BL.insurance
                 }
                 if (!string.IsNullOrEmpty(paging.MiddleName))
                 {
-                    data = data.Where(c => c.FirstName.Contains(paging.MiddleName)).ToList();
+                    data = data.Where(c => c.MiddleName.Contains(paging.MiddleName)).ToList();
                 }
                 if (paging.StartDate.HasValue && paging.EndDate.HasValue)
                 {
@@ -160,6 +160,11 @@ namespace Insurance.Insurance.BL.insurance
             try
             {
                 int ID;
+                //trim
+                model.FirstName = model.FirstName.TrimStart().TrimEnd().Replace("  ", " ");
+                model.LastName = model.LastName.TrimStart().TrimEnd().Replace("  ", " ");
+                model.MiddleName = model.MiddleName.TrimStart().TrimEnd().Replace("  ", " ");
+
                 using (var transaction = _dbcontext.Database.BeginTransaction())
                 {
                     try
@@ -169,17 +174,27 @@ namespace Insurance.Insurance.BL.insurance
 
                             
                             var data = Mapper.Map<InsuranceInfoDTO, InsuranceInfo>(model);
-                            //delete dup records
-                            var detail = await _dbcontext.InsuranceInfoDetail.Where(c => c.ID_InsuranceInfo == data.ID).SingleOrDefaultAsync();
-                            detail.ID_InsuranceInfo = data.ID;
+                            data.IsActive = true;
+
+                            ////delete dup records
+                            var sql = string.Format("Delete from InsuranceInfoDetail where ID_InsuranceInfo = {0}", model.ID);
+                            _dbcontext.Database.ExecuteSqlCommand(sql);
+
                             _dbcontext.Entry(data).State = EntityState.Modified;
-                            _dbcontext.Entry(detail).State = EntityState.Deleted;
                             _dbcontext.SaveChanges();
                             ID = data.ID;
 
                         }
                         else
                         {
+                            //Check if name exist
+                            var entry = await _dbcontext.InsuranceInfo.Where(c => c.FirstName.ToLower() == model.FirstName.ToLower()
+                            && c.MiddleName.ToLower() == model.MiddleName.ToLower() && c.LastName.ToLower() == model.LastName.ToLower()
+                            ).CountAsync();
+                            if (entry != 0)
+                            {
+                                return new GlobalResponseDTO() { IsSuccess = false, Message = "User already in the system" };
+                            }
                             var data = Mapper.Map<InsuranceInfoDTO, InsuranceInfo>(model);
                             _dbcontext.Entry(data).State = EntityState.Added;
                             _dbcontext.SaveChanges();
@@ -189,10 +204,10 @@ namespace Insurance.Insurance.BL.insurance
                         transaction.Commit();
 
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         transaction.Rollback();
-                        return new GlobalResponseDTO() { IsSuccess = true, Message = "Server processes error" };
+                        return new GlobalResponseDTO() { IsSuccess = false, Message = "Server processes error" };
                         throw;
                     }
                 }

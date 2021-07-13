@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Insurance.BL.Model;
+using Insurance.BL.Util;
 using Insurance.Insurance.BL.insurance;
 using Insurance.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
 
 namespace Insurance.Controllers
 {
+    [Authorize(Roles = UserRole.Admin)]
     [Route("api/[controller]")]
     [ApiController]
     public class InsuranceController : ControllerBase
@@ -132,7 +135,7 @@ namespace Insurance.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("count")]
         [ProducesResponseType(typeof(int?), 200)]
         public async Task<IActionResult> GetInsuranceCount(InsuranceCountRequest model)
